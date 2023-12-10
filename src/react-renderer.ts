@@ -1,6 +1,8 @@
 import type { Context, MiddlewareHandler } from 'hono'
-import React, { ReactElement } from 'react'
+import React from 'react'
 import { renderToString, renderToReadableStream } from 'react-dom/server'
+
+export interface Props {}
 
 declare module 'hono' {
   interface ContextRenderer {
@@ -12,8 +14,6 @@ type RendererOptions = {
   stream?: boolean | Record<string, string>
 }
 
-export interface Props {}
-
 type BaseProps = {
   c: Context
   children: React.ReactElement
@@ -21,7 +21,8 @@ type BaseProps = {
 
 const createRenderer =
   (c: Context, component: React.FC<Props & BaseProps>, options?: RendererOptions) =>
-  async (children: ReactElement, props?: Props) => {
+  async (children: React.ReactElement, props?: Props) => {
+    // @ts-ignore
     const node = component({ children, c, ...props })
     if (options?.stream) {
       const stream = await renderToReadableStream(React.createElement(React.Fragment, null, node))

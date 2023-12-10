@@ -2,15 +2,24 @@ import { Hono } from 'hono'
 import { reactRenderer } from './react-renderer'
 import { Suspense, use } from 'react'
 
+declare module './react-renderer' {
+  interface Props {
+    title: string
+  }
+}
+
 const app = new Hono()
 
 app.get(
   '*',
   reactRenderer(
-    ({ children }) => {
+    ({ children, title }) => {
       return (
         <html>
-          <body>{children}</body>
+          <head>
+            <title>{title}</title>
+          </head>
+          {children}
         </html>
       )
     },
@@ -27,9 +36,14 @@ const Component: React.FC = () => {
 
 app.get('/', (c) => {
   return c.render(
-    <Suspense fallback="loading...">
-      <Component />
-    </Suspense>
+    <div>
+      <Suspense fallback="loading...">
+        <Component />
+      </Suspense>
+    </div>,
+    {
+      title: 'React Renderer'
+    }
   )
 })
 
