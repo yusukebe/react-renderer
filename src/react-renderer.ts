@@ -1,4 +1,4 @@
-import type { Context, MiddlewareHandler } from 'hono'
+import type { Context, Env, MiddlewareHandler } from 'hono'
 import React from 'react'
 import { renderToString, renderToReadableStream } from 'react-dom/server'
 
@@ -19,13 +19,15 @@ type BaseProps = {
   children: React.ReactElement
 }
 
+const RequestContext = React.createContext<Context | null>(null)
+
 const createRenderer =
   (c: Context, component: React.FC<Props & BaseProps>, options?: RendererOptions) =>
   async (children: React.ReactElement, props?: Props) => {
     // @ts-ignore
     const node = component({ children, c, ...props })
     if (options?.stream) {
-      const stream = await renderToReadableStream(React.createElement(React.Fragment, null, node))
+      const stream = await renderToReadableStream(React.createElement(RequestContext.Provider, { value: c }, node))
       return c.body(stream, {
         headers:
           options.stream === true
@@ -36,7 +38,7 @@ const createRenderer =
             : options.stream
       })
     } else {
-      const body = renderToString(React.createElement(React.Fragment, null, node))
+      const body = renderToString(React.createElement(RequestContext.Provider, { value: c }, node))
       return c.html(body)
     }
   }
@@ -46,3 +48,11 @@ export const reactRenderer = (component: React.FC<Props & BaseProps>, options?: 
     c.setRenderer(createRenderer(c, component, options))
     return next()
   }
+
+export const useRequestContext = <E extends Env = any>(): Context<E> => {
+  const c = React.useContext(RequestContext)
+  if (!c) {
+    throw new Error('RequestContext is not provided.')
+  }
+  return c
+}

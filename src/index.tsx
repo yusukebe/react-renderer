@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { reactRenderer } from './react-renderer'
+import { reactRenderer, useRequestContext } from './react-renderer'
 import { Suspense, use } from 'react'
 
 declare module './react-renderer' {
@@ -31,7 +31,8 @@ app.get(
 
 const Component: React.FC = () => {
   use(new Promise((r) => setTimeout(r, 2000)))
-  return <h1>Hello World!</h1>
+  const c = useRequestContext()
+  return <h1>Hello World! {c.req.query('name') ?? 'no name'}</h1>
 }
 
 app.get('/', (c) => {
